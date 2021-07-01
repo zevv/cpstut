@@ -134,7 +134,14 @@ doAssert c.state == Finished
 
 doAssert c.finished
 
-
+# In real life, your CPS functions will have more then one leg. You would
+# typically want to call the `fn()` proc repeatedly until the continunation
+# is no longer running. This is a typical CPS idiom, and looks like this:
+#
+#   while c.running:
+#     c = c.fn(c)
+#
+#
 # A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
 # =================================================
 #
