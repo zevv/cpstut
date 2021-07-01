@@ -36,7 +36,7 @@ import cps
 # is just a regular Nim object that is inheritable. This is what the type looks like:
 #
 # Continuation = ref object of RootObj
-#    fn*: proc (c: Continuation): Continuation {.nimcall.} ##
+#    fn*: proc (c: Continuation): Continuation {.nimcall.}
 #    ...
 #
 # The object has a few more fields which are used for the CPS implementation
@@ -128,9 +128,136 @@ doAssert c.state == Finished
 doAssert c.finished
 
 
-# A MORE ELABOREATE EXAMPLE
+# A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
 #
 # The above function was pretty simply and minimal, as it was transformed to
 # only one single leg; it served the purpose of showing how to instantiate and
-# run a CPS function. Let's go a bit deeper now.
+# run a CPS function.
+#
+# Let's go a bit deeper now. The essence of CPS is that our functions can be
+# split into legs that can be run at leisure; one typical example of this would
+# be cooperative scheduling, where we can run multiple CPS functions
+# concurrently.
+#
+# For a simple example, let's write a little function with a loop - just a
+# normal regular Nim function, which we will change later to run concurrent
+# using CPS:
 
+proc runner1(name: string) =
+  var i = 0
+  while i < 4:
+    inc i
+    echo name, " ", i
+
+# So let's call the function to see if it works:
+
+runner1("donkey")
+
+# The output of this function call looks like this:
+#
+#   donkey 1
+#   donkey 2
+#   donkey 3
+#   donkey 4
+#
+# Now let's see how we can leverage CPS to run multiple instances of this
+# function concurrently!
+#
+# Let's start with a place to store the continuations that we want to run. A
+# deque is a good fit for this, this is a first-in-first-out queue where we can
+# add new continuations on one side, and take them off to run them from the
+# other side:
+
+import deques
+
+var work: Deque[Continuation]
+
+# Now we need some code to run this work queue. It will have a pretty simple
+# job: it takes one continuation of the queue and trampoline it until it is no
+# longer running, and repeat until there is no more work on the queue:
+
+proc runWork() =
+  while work.len > 0:
+    var c = work.popFirst()
+    while c.running:
+      c = c.fn(c)
+
+# Now we will introduce the last important part for building CPS programs,
+# which is a special kind of function with the silly name "cpsMagic". Hold on
+# to your seat, because this is possibly the most confusing part of CPS:
+#
+# Let's first describe what a cpsMagic function looks like: it
+#
+# - is annotated with the {.cpsMagic.} pragma 
+# - takes a continuation type as its first arguments 
+# - has the same continuation type as its return value 
+# - can only be called from within a CPS function
+#
+# When calling the function, you do not need to provide the first argument, as
+# this will be injected by the CPS transformation at the call site. Also you do
+# not need to consume its return value, as that is handled by CPS internally.
+#
+# Now this is where the magic comes in: cpsMagic functions can be used to alter
+# the program flow of a CPS function: it has access to the current continuation
+# that is passed as it's first argument, and it can return a continuation which
+# will be used as the next leg in the trampoline.
+#
+# That sounds complicated, let's just write our first .cpsMagic. proc:
+
+proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
+  work.addLast c
+  return nil
+
+# Let's see what happens when we call this:
+#
+# - The current continuation of the cps function will be passed as the first 
+#   argument 'c'
+#
+# - The continuation 'c' is added to `work`, the dequeue of continuations
+#
+# - It returns `nil` - which means "no continuation". This will cause the
+#   trampoline that is running the continuation to terminate.
+#
+# Summarizing the above, the `schedule()` function will move the current
+# continuation to the work queue, and stop the trampoline.
+#
+# Remember that when calling a .cpsMagic. function from within cps, we do not 
+# need to provide the first argument, nor handle the return type. To call
+# the above function, simply do
+#
+#    schedule()
+#
+# It is now time to put the above pieces together. Let's take the example
+# function we wrote before, and make the required changes:
+#
+# - Add the `{.cps:Cont1.}` pragma to make it into a CPS function
+# - call `schedule()` in the loop to yield control
+
+proc runner2(name: string) {.cps:Cont1.}=
+  var i = 0
+  while i < 4:
+    inc i
+    echo name, " ", i
+    schedule()
+
+# And that's it! Now we can instantiate the function into a continuation with
+# the `whelp` macro. Let's do this twice to create two instances, and add the
+# resulting continuations to the work queue:
+
+work.addLast whelp runner2("donkey")
+work.addLast whelp runner2("tiger")
+
+# Now let's run this beast: 
+
+runwork()
+
+# And here is the output of our runL
+#
+#   donkey 1
+#   tiger 1
+#   donkey 2
+#   tiger 2
+#   donkey 3
+#   tiger 3
+#   donkey 4
+#   tiger 4
