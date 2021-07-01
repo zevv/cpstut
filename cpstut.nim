@@ -30,7 +30,7 @@
 
 import cps
 
-# THE CONTINUATION
+# BABY STEPS: MY FIRST CPS PROGRAM
 #
 # At the heart of CPS lies the `Continuation` type. In our implementation, this
 # is just a regular Nim object that is inheritable. This is what the type looks like:
@@ -96,10 +96,10 @@ var c: Continuation = whelp hello()
 #
 # TODO Is there really no way around this?
 #
-# Our continuation is now ready to go; actually, it has already started. There
-# is a little function to check the state of a continuation, and the one above
-# is now in the state called `Running`. You can inspect the current state of a
-# continuation like this:
+# Our continuation is now ready to be run; in fact, it has already started!
+# There is a little function to check the state of a continuation, and the one
+# above is now in the state called `Running`. You can inspect the current state
+# of a continuation like this:
 
 doAssert c.state == Running
 
@@ -107,11 +107,11 @@ doAssert c.state == Running
 
 doAssert c.running()
 
-# Now, to run our function, we need to perform a special function call, which
-# in the world of CPS is called `trampolining`: we call the `fn()` proc that is
-# in the object, and pass the object itself to it. The result of this function
-# call is again a continuation. Calling the `fn()` function once will run
-# exactly one leg of our function:
+# Now, to run the rest of our function (_continue_ it!), we need to do a little
+# function call dance, which in the world of CPS is called `trampolining`: we
+# call the `fn()` proc that is in the object, and pass the object itself to it.
+# The result of this function call is again a continuation. Calling the `fn()`
+# function once will run exactly one leg of our function:
 
 c = c.fn(c)
 
@@ -126,4 +126,11 @@ doAssert c.state == Finished
 # or again, the shorthand
 
 doAssert c.finished
+
+
+# A MORE ELABOREATE EXAMPLE
+#
+# The above function was pretty simply and minimal, as it was transformed to
+# only one single leg; it served the purpose of showing how to instantiate and
+# run a CPS function. Let's go a bit deeper now.
 
