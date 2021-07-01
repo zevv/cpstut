@@ -251,7 +251,7 @@ work.addLast whelp runner2("tiger")
 
 runwork()
 
-# And here is the output of our runL
+# And here is the output of our run:
 #
 #   donkey 1
 #   tiger 1
@@ -261,3 +261,4 @@ runwork()
 #   tiger 3
 #   donkey 4
 #   tiger 4
+
