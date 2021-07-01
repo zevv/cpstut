@@ -1,25 +1,30 @@
 
 # INTRODUCTION
+# ============
 #
-# What you are reading is a little tutorial to get started with Nim CPS. 
-#
-# The latest greatest CPS can be found at https://github.com/disruptek/cps
-#
-# This document written in the literate programming style, meaning that this is
-# a readable document, but also a compilable and working Nim program.
+# What you are reading is a little tutorial to get started with Nim CPS. It
+# helps to first read the general CPS intruction at
+# https://github.com/zevv/cpsdoc to get acquinted with the process and
+# terminology. 
+# 
+# This document will introduce the essential parts of the CPS API to get you
+# started writing your own CPS programs. It is written in the literate
+# programming style, meaning that this is a readable document, but also a
+# compilable and working Nim program.
 #
 # To run this program, call the nim compiler like so:
 #
 #   nim r --gc:arc csptut
 #
+# The latest greatest CPS can be found at https://github.com/disruptek/cps
+#
 # WHAT IS CPS
+# ===========
 #
 # For now I'll just point to the other documentation that is already available:
 # please refer to the README of the disruptek/cps repository for a brief intro,
 # or read up at https://github.com/zevv/cpsdoc for a more in-depth description
 # of the concepts underlying the CPS transformation
-#
-# GETTING STARTED
 #
 # cps is available as a regular nim library that you must import before cps is
 # available in your program. The module offers a number of macros and
@@ -31,6 +36,7 @@
 import cps
 
 # BABY STEPS: MY FIRST CPS PROGRAM
+# ================================
 #
 # At the heart of CPS lies the `Continuation` type. In our implementation, this
 # is just a regular Nim object that is inheritable. This is what the type looks like:
@@ -54,6 +60,7 @@ type
 # objects, but for now we'll start out simple.
 #
 # THE CPS TRANSFORM MACRO
+# =======================
 #
 # Next to the continuation type, the cps macro is the other imporant part for
 # writing CPS programs, this is the macro that will be applied to any Nim
@@ -129,6 +136,7 @@ doAssert c.finished
 
 
 # A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
+# =================================================
 #
 # The above function was pretty simply and minimal, as it was transformed to
 # only one single leg; it served the purpose of showing how to instantiate and
