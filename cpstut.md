@@ -270,8 +270,8 @@ And that's it! Now we can instantiate the function into a continuation with
 the `whelp` macro. Let's do this twice to create two instances, and add the
 resulting continuations to the work queue:
 
-work.addLast whelp runner2("donkey")
-work.addLast whelp runner2("tiger")
+  work.addLast whelp runner2("donkey")
+  work.addLast whelp runner2("tiger")
 
 Now let's run this beast: 
 
