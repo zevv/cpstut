@@ -58,7 +58,8 @@ type
 
 # At a later time we will add our own fields to the derived Continuation
 # objects, but for now we'll start out simple.
-#
+
+
 # THE CPS TRANSFORM MACRO
 # =======================
 #
@@ -141,7 +142,17 @@ doAssert c.finished
 #   while c.running:
 #     c = c.fn(c)
 #
+# Running the continuation legs in a row is called "trampolining", look at
+# the diagram below to see why:
 #
+#       __     _____     _____     _____     _____     ___
+# whelp   \   /     v   /     v   /     v   /     v   /     finished
+#        +-----+   +-----+   +-----+   +-----+   +-----+
+#        | leg |   | leg |   | leg |   | leg |   | leg |
+#        +-----+   +-----+   +-----+   +-----+   +-----+
+#
+
+
 # A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
 # =================================================
 #
