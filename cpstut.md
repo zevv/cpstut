@@ -21,6 +21,8 @@ a bit on the background: https://github.com/zevv/cpsdoc
 
 == BABY STEPS: MY FIRST CPS PROGRAM
 
+The complete code for this chapter can be found at https://github.com/zevv/cpstut/cpstut1.nim
+
 cps is available as a regular nim library that you must import before cps is
 available in your program. The module offers a number of macros and templates,
 for details refer to the module documentation at
@@ -72,7 +74,6 @@ the notation looks like:
 
   proc hello() {.cps:Cont1.} =
     echo "Hello, world!"
-    echo ""
 
 Congratulations! we have now written our very first CPS program. Nim will now
 know all that is needed to do the transformation on our procedure at compile
@@ -147,6 +148,8 @@ the diagram below to see why:
 
 == A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
 
+The complete code for this chapter can be found at https://github.com/zevv/cpstut/cpstut2.nim
+
 The above function was pretty simply and minimal, as it was transformed to
 only one single leg; it served the purpose of showing how to instantiate and
 run a CPS function.
@@ -165,7 +168,6 @@ using CPS:
     while i < 4:
       inc i
       echo name, " ", i
-    echo ""
 
 So let's call the function to see if it works:
 
@@ -188,7 +190,7 @@ other side:
 
   import deques
 
-var work: Deque[Continuation]
+  var work: Deque[Continuation]
 
 Now we need some code to run this work queue. It will have a pretty simple
 job: it takes one continuation of the queue and trampoline it until it is no
