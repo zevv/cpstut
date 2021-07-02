@@ -145,8 +145,8 @@ doAssert c.finished
 # Running the continuation legs in a row is called "trampolining", look at
 # the diagram below to see why:
 #
-#       __     _____     _____     _____     _____     ___
-# whelp   \   /     v   /     v   /     v   /     v   /     finished
+# whelp -.     ,---.     ,---.     ,---.     ,---.     ,--> fihisned
+#         \   /     v   /     v   /     v   /     v   /
 #        +-----+   +-----+   +-----+   +-----+   +-----+
 #        | leg |   | leg |   | leg |   | leg |   | leg |
 #        +-----+   +-----+   +-----+   +-----+   +-----+
