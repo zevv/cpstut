@@ -42,7 +42,7 @@ is just a regular Nim object that is inheritable. This is what the type looks li
 
 The object has a few more fields which are used for the CPS implementation
 internally, but one of the fields is very important for the users of cps,
-which is `fn`, which is the function pointer that makes CPS continuations
+which is `fn`, the function pointer that makes CPS continuations
 tick. We'll get back to its use later.
 
 To start with CPS, you would typically define your own object, inherited from
@@ -57,14 +57,14 @@ objects, but for now we'll start out simple.
 
 == THE CPS TRANSFORM MACRO
 
-Next to the continuation type, the cps macro is the other imporant part for
+Next to the continuation type, the cps macro is the other important part for
 writing CPS programs, this is the macro that will be applied to any Nim
 functions we want to transform to CPS style. This macro does two jobs: 
 
 - it will split the Nim function into a number of separate functions that we
-  can independely; each of these functions is what we call a "Leg".
+  can independently; each of these functions is what we call a "Leg".
 
-- it will create a new object type that is derived of our `MyCont`, on which it
+- it will create a new object type that is derived from our `MyCont`, on which it
   will store all function arguments and local variables. This type is opaque
   to us and is only used by CPS internally.
 
@@ -76,9 +76,9 @@ the notation looks like:
   proc hello() {.cps:MyCont.} =
     echo "Hello, world!"
 
-Congratulations! we have now written our very first CPS program. Nim will now
+Congratulations! We have now written our very first CPS program. Nim will now
 know all that is needed to do the transformation on our procedure at compile
-time so it will run our code CPS style.
+time so it will run our code in CPS style.
 
 The next thing to do would be to run our CPS transformed function. This
 involves a few steps we'll go through:
@@ -127,7 +127,7 @@ This means the continuation is now done and complete:
 
 or again, the shorthand
 
-  doAssert c.finished
+  doAssert c.finished()
 
 In real life, your CPS functions will have more then one leg. You would
 typically want to call the `fn()` proc repeatedly until the continunation
@@ -139,7 +139,7 @@ is no longer running. This is a typical CPS idiom, and looks like this:
 Running the continuation legs in a row is called "trampolining", look at
 the diagram below to see why:
 
-  whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> fihisned
+  whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> finished
             \   /     v   /     v   /     v   /     v   /
            +-----+   +-----+   +-----+   +-----+   +-----+
            | leg |   | leg |   | leg |   | leg |   | leg |
@@ -147,7 +147,7 @@ the diagram below to see why:
 
 
 
-== A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
+== A MORE ELABORATE EXAMPLE: COOPERATIVE SCHEDULING
 
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut2.nim
@@ -194,8 +194,8 @@ other side:
 
   var work: Deque[Continuation]
 
-Now we need some code to run this work queue. It will have a pretty simple
-job: it takes one continuation of the queue and trampoline it until it is no
+Now we need some code to run with this work queue. It will have a pretty simple
+job: it takes one continuation of the queue and trampolines it until it is no
 longer running, and repeat until there is no more work on the queue:
 
   proc runWork() =
@@ -208,9 +208,9 @@ Now we will introduce the last important part for building CPS programs,
 which is a special kind of function with the silly name "cpsMagic". Hold on
 to your seat, because this is possibly the most confusing part of CPS:
 
-Let's first describe what a cpsMagic function looks like: it
+Let's first describe what a `cpsMagic` function looks like: it
 
-- is annotated with the {.cpsMagic.} pragma
+- is annotated with the `{.cpsMagic.}` pragma
 - takes a continuation type as its first arguments
 - has the same continuation type as its return value
 - can only be called from within a CPS function
@@ -221,10 +221,10 @@ not need to consume its return value, as that is handled by CPS internally.
 
 Now this is where the magic comes in: cpsMagic functions can be used to alter
 the program flow of a CPS function: it has access to the current continuation
-that is passed as it's first argument, and it can return a continuation which
+that is passed as its first argument, and it can return a continuation which
 will be used as the next leg in the trampoline.
 
-That sounds complicated, let's just write our first .cpsMagic. proc:
+That sounds complicated, so let's just write our first `cpsMagic` proc:
 
   proc schedule(c: MyCont): MyCont {.cpsMagic.} =
     work.addLast c
@@ -233,9 +233,9 @@ That sounds complicated, let's just write our first .cpsMagic. proc:
 Let's see what happens when we call this:
 
 - The current continuation of the cps function will be passed as the first
-  argument 'c'
+  argument `c`
 
-- The continuation 'c' is added to `work`, the dequeue of continuations
+- The continuation `c` is added to `work`, the dequeue of continuations
 
 - It returns `nil` - which means "no continuation". This will cause the
   trampoline that is running the continuation to terminate.
@@ -245,9 +245,9 @@ continuation to the work queue, and stop the trampoline. The trampoline
 now has lost track of the continuation, as it is stored on the work queue
 instead so we can pick it up and suspend it later.
 
-Remember that when calling a .cpsMagic. function from within cps, we do not
+Remember that when calling a `cpsMagic` function from within CPS, we do not
 need to provide the first argument, nor handle the return type. To call
-the above function, simply do
+the above function, simply do:
 
   schedule()
 
@@ -258,7 +258,7 @@ function we wrote before, and make the required changes:
 
 - Call `schedule()` in the loop to suspend execution of the code by
   the trampoline. In the context of coroutines or iterators, this operation
-  is usally called "yield"
+  is usually called "yield"
 
 This is what it will look like now:
 
@@ -298,10 +298,10 @@ The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut3.nim
 
 The example from the chapter above works just fine, but has one ugly drawback:
-the work queue is a global variable that is accessed from the cpsMagic proc. A
-nice way to solve this is to make the work queue a reference object which is
+the work queue is a global variable that is accessed from the `cpsMagic` proc. A
+nice way to solve this is to make the work queue a reference object, which is
 added to the continuation type itself: this way, every CPS function can access
-the work queue from the cpsMagic functions, without having it to pass around.
+the work queue from the `cpsMagic` functions, without having to pass it around.
 
 For this we need to make some changes to the code: first we define a reference
 type holding the work queue, and add a value of this type to our own
