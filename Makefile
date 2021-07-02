@@ -1,3 +1,3 @@
 
-cpstut.html: cpstut.md
-	asciidoctor cpstut.md
+htmldocs/cpstut.html: cpstut.md
+	nim rst2html cpstut.md
