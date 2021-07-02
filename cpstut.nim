@@ -81,6 +81,7 @@ type
 
 proc hello() {.cps:Cont1.} =
   echo "Hello, world!"
+  echo ""
 
 # Congratulations! we have now written our very first CPS program. Nim will now
 # know all that is needed to do the transformation on our procedure at compile
@@ -124,7 +125,7 @@ doAssert c.running()
 c = c.fn(c)
 
 # The result of the above call will be "Hello, world!" printed to your terminal!
-# 
+#
 # Our original function was not very exciting and did not do much; after printing
 # the text, it is done and finished - all the work could be done in one single leg.
 # This means the continuation is now done and complete:
@@ -145,11 +146,11 @@ doAssert c.finished
 # Running the continuation legs in a row is called "trampolining", look at
 # the diagram below to see why:
 #
-# whelp -.     ,---.     ,---.     ,---.     ,---.     ,--> fihisned
-#         \   /     v   /     v   /     v   /     v   /
-#        +-----+   +-----+   +-----+   +-----+   +-----+
-#        | leg |   | leg |   | leg |   | leg |   | leg |
-#        +-----+   +-----+   +-----+   +-----+   +-----+
+# whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> fihisned
+#           \   /     v   /     v   /     v   /     v   /
+#          +-----+   +-----+   +-----+   +-----+   +-----+
+#          | leg |   | leg |   | leg |   | leg |   | leg |
+#          +-----+   +-----+   +-----+   +-----+   +-----+
 #
 
 
@@ -174,6 +175,7 @@ proc runner1(name: string) =
   while i < 4:
     inc i
     echo name, " ", i
+  echo ""
 
 # So let's call the function to see if it works:
 
@@ -214,9 +216,9 @@ proc runWork() =
 #
 # Let's first describe what a cpsMagic function looks like: it
 #
-# - is annotated with the {.cpsMagic.} pragma 
-# - takes a continuation type as its first arguments 
-# - has the same continuation type as its return value 
+# - is annotated with the {.cpsMagic.} pragma
+# - takes a continuation type as its first arguments
+# - has the same continuation type as its return value
 # - can only be called from within a CPS function
 #
 # When calling the function, you do not need to provide the first argument, as
@@ -236,7 +238,7 @@ proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
 
 # Let's see what happens when we call this:
 #
-# - The current continuation of the cps function will be passed as the first 
+# - The current continuation of the cps function will be passed as the first
 #   argument 'c'
 #
 # - The continuation 'c' is added to `work`, the dequeue of continuations
@@ -245,9 +247,11 @@ proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
 #   trampoline that is running the continuation to terminate.
 #
 # Summarizing the above, the `schedule()` function will move the current
-# continuation to the work queue, and stop the trampoline.
+# continuation to the work queue, and stop the trampoline. The trampoline
+# now has lost track of the continuation, as it is stored on the work queue
+# instead so we can pick it up and suspend it later.
 #
-# Remember that when calling a .cpsMagic. function from within cps, we do not 
+# Remember that when calling a .cpsMagic. function from within cps, we do not
 # need to provide the first argument, nor handle the return type. To call
 # the above function, simply do
 #
@@ -257,7 +261,10 @@ proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
 # function we wrote before, and make the required changes:
 #
 # - Add the `{.cps:Cont1.}` pragma to make it into a CPS function
-# - call `schedule()` in the loop to yield control
+#
+# - Call `schedule()` in the loop to suspend execution of the code by
+#   the trampoline. In the context of coroutines or iterators, this operation
+#   is usally called "yield"
 
 proc runner2(name: string) {.cps:Cont1.}=
   var i = 0
@@ -265,6 +272,7 @@ proc runner2(name: string) {.cps:Cont1.}=
     inc i
     echo name, " ", i
     schedule()
+  echo ""
 
 # And that's it! Now we can instantiate the function into a continuation with
 # the `whelp` macro. Let's do this twice to create two instances, and add the
@@ -287,4 +295,7 @@ runwork()
 #   tiger 3
 #   donkey 4
 #   tiger 4
+
+# TODO: {.cpsVoodo.}
+# TODO: custom data on the continuation type
 
