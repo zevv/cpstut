@@ -8,7 +8,7 @@
 :nofooter:
 
 
-== INTRODUCTION
+# INTRODUCTION
 
 What you are reading is a little tutorial to get started with Nim CPS. This
 document will introduce the essential parts of the CPS API to get you started
@@ -19,7 +19,7 @@ The latest greatest CPS can be found at https://github.com/disruptek/cps
 If you are not familiar with the concept of CPS I recomment first reading up
 a bit on the background: https://github.com/zevv/cpsdoc 
 
-== BABY STEPS: MY FIRST CPS PROGRAM
+# BABY STEPS: MY FIRST CPS PROGRAM
 
 The complete code for this chapter can be found at 
 https://github.com/zevv/cpstut/blob/master/cpstut1.nim
@@ -55,7 +55,7 @@ At a later time we will add our own fields to the derived Continuation
 objects, but for now we'll start out simple.
 
 
-== THE CPS TRANSFORM MACRO
+# THE CPS TRANSFORM MACRO
 
 Next to the continuation type, the cps macro is the other important part for
 writing CPS programs, this is the macro that will be applied to any Nim
@@ -147,7 +147,7 @@ the diagram below to see why:
 
 
 
-== A MORE ELABORATE EXAMPLE: COOPERATIVE SCHEDULING
+# A MORE ELABORATE EXAMPLE: COOPERATIVE SCHEDULING
 
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut2.nim
@@ -292,7 +292,7 @@ And here is the output of our run:
   donkey 4
   tiger 4
 
-== GROWING YOUR OWN CONTINUATIONS
+# GROWING YOUR OWN CONTINUATIONS
 
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut3.nim
@@ -307,7 +307,7 @@ For this we need to make some changes to the code: first we define a reference
 type holding the work queue, and add a value of this type to our own
 continuation:
 
-----
+```
   type
 
     Work = ref object
@@ -315,7 +315,7 @@ continuation:
 
     MyCont = ref object of Continuation
       work: Work
-----
+```
 
 When we now whelp new continuations, we need to make sure that the `work`
 pointer on the continuation points to a valid work queue. A little convenience
@@ -353,7 +353,7 @@ work queue like this:
   mywork.run()
 
 
-== TODO
+# TODO
 
 TODO: {.cpsVoodo.}
 
