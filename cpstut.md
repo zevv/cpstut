@@ -89,7 +89,7 @@ looks like this:
 WARNING: TODO: I still hate whelp. not the word, but the fact that we need it at all.
 I'd rather just do var c = hello(). Yeah yeah I know.
 
-var c: Continuation = whelp hello()
+  var c: Continuation = whelp hello()
 
 For technical reasons, the whelp macro returns a derived type, which we need to 
 convert back to the `Continuation` type to be able to work with it.
