@@ -1,14 +1,5 @@
 
-= A Nim CPS tutorial
-:toc: left
-:toclevels: 4
-:icons: font
-:doctype: book
-:stylesheet: style.css
-:nofooter:
-
-
-# INTRODUCTION
+# Introduction
 
 What you are reading is a little tutorial to get started with Nim CPS. This
 document will introduce the essential parts of the CPS API to get you started
@@ -19,7 +10,7 @@ The latest greatest CPS can be found at https://github.com/disruptek/cps
 If you are not familiar with the concept of CPS I recomment first reading up
 a bit on the background: https://github.com/zevv/cpsdoc 
 
-# BABY STEPS: MY FIRST CPS PROGRAM
+## Baby steps: my first cps program
 
 The complete code for this chapter can be found at 
 https://github.com/zevv/cpstut/blob/master/cpstut1.nim
@@ -31,14 +22,18 @@ https://disruptek.github.io/cps/cps.html
 
 So we start with the import:
 
-  import cps
+```nim
+import cps
+```
 
 At the heart of CPS lies the `Continuation` type. In our implementation, this
 is just a regular Nim object that is inheritable. This is what the type looks like:
 
-  Continuation = ref object of RootObj
-     fn*: proc (c: Continuation): Continuation {.nimcall.}
-     ...
+```nim
+Continuation = ref object of RootObj
+   fn*: proc (c: Continuation): Continuation {.nimcall.}
+   ...
+```
 
 The object has a few more fields which are used for the CPS implementation
 internally, but one of the fields is very important for the users of cps,
@@ -48,14 +43,16 @@ tick. We'll get back to its use later.
 To start with CPS, you would typically define your own object, inherited from
 the cps Continuation type, like so
 
-  type
-    MyCont = ref object of Continuation
+```nim
+type
+  MyCont = ref object of Continuation
+```
 
 At a later time we will add our own fields to the derived Continuation
 objects, but for now we'll start out simple.
 
 
-# THE CPS TRANSFORM MACRO
+## The CPS transform macro
 
 Next to the continuation type, the cps macro is the other important part for
 writing CPS programs, this is the macro that will be applied to any Nim
@@ -73,8 +70,10 @@ user needs to specify the type on which the macro should operate, and this
 type needs to be a derivative of the Continuation root object. This is what
 the notation looks like:
 
-  proc hello() {.cps:MyCont.} =
-    echo "Hello, world!"
+```nim
+proc hello() {.cps:MyCont.} =
+  echo "Hello, world!"
+```
 
 Congratulations! We have now written our very first CPS program. Nim will now
 know all that is needed to do the transformation on our procedure at compile
@@ -88,26 +87,32 @@ continuation object and prepare it so that it will point to the first leg of
 our function. Creating this instance is done with the `whelp` macro, and
 looks like this:
 
-WARNING: TODO: I still hate whelp. not the word, but the fact that we need it at all.
+TODO: I still hate whelp. not the word, but the fact that we need it at all.
 I'd rather just do var c = hello(). Yeah yeah I know.
 
-  var c: Continuation = whelp hello()
+```nim
+var c: Continuation = whelp hello()
+```
 
 For technical reasons, the whelp macro returns a derived type, which we need to 
 convert back to the `Continuation` type to be able to work with it.
 
-WARNING: TODO: Is there really no way around this?
+TODO: Is there really no way around this?
 
 Our continuation is now ready to be run; in fact, it has already started!
 There is a little function to check the state of a continuation, and the one
 above is now in the state called `Running`. You can inspect the current state
 of a continuation like this:
 
-  doAssert c.state == Running
+```nim
+doAssert c.state == Running
+```
 
 or, shorter:
 
-  doAssert c.running()
+```nim
+doAssert c.running()
+```
 
 Now, to run the rest of our function (_continue_ it!), we need to do a little
 function call dance, which in the world of CPS is called `trampolining`: we
@@ -115,7 +120,9 @@ call the `fn()` proc that is in the object, and pass the object itself to it.
 The result of this function call is again a continuation. Calling the `fn()`
 function once will run exactly one leg of our function:
 
-  c = c.fn(c)
+```nim
+c = c.fn(c)
+```
 
 The result of the above call will be "Hello, world!" printed to your terminal!
 
@@ -123,31 +130,38 @@ Our original function was not very exciting and did not do much; after printing
 the text, it is done and finished - all the work could be done in one single leg.
 This means the continuation is now done and complete:
 
-  doAssert c.state == Finished
+```nim
+doAssert c.state == Finished
+```
 
 or again, the shorthand
 
-  doAssert c.finished()
+```nim
+doAssert c.finished()
+```
 
 In real life, your CPS functions will have more then one leg. You would
 typically want to call the `fn()` proc repeatedly until the continunation
 is no longer running. This is a typical CPS idiom, and looks like this:
 
-  while c.running:
-    c = c.fn(c)
+```nim
+while c.running:
+  c = c.fn(c)
+```
 
 Running the continuation legs in a row is called "trampolining", look at
 the diagram below to see why:
 
-  whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> finished
-            \   /     v   /     v   /     v   /     v   /
-           +-----+   +-----+   +-----+   +-----+   +-----+
-           | leg |   | leg |   | leg |   | leg |   | leg |
-           +-----+   +-----+   +-----+   +-----+   +-----+
+```
+whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> finished
+          \   /     v   /     v   /     v   /     v   /
+         +-----+   +-----+   +-----+   +-----+   +-----+
+         | leg |   | leg |   | leg |   | leg |   | leg |
+         +-----+   +-----+   +-----+   +-----+   +-----+
+```
 
 
-
-# A MORE ELABORATE EXAMPLE: COOPERATIVE SCHEDULING
+## A more elaborate example: cooperative scheduling
 
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut2.nim
@@ -165,22 +179,28 @@ For a simple example, let's write a little function with a loop - just a
 normal regular Nim function, which we will change later to run concurrent
 using CPS:
 
-  proc runner1(name: string) =
-    var i = 0
-    while i < 4:
-      inc i
-      echo name, " ", i
+```nim
+proc runner1(name: string) =
+  var i = 0
+  while i < 4:
+    inc i
+    echo name, " ", i
+```
 
 So let's call the function to see if it works:
 
-  runner1("donkey")
+```nim
+runner1("donkey")
+```
 
 The output of this function call looks like this:
 
-  donkey 1
-  donkey 2
-  donkey 3
-  donkey 4
+```
+donkey 1
+donkey 2
+donkey 3
+donkey 4
+```
 
 Now let's see how we can leverage CPS to run multiple instances of this
 function concurrently!
@@ -190,19 +210,23 @@ deque is a good fit for this, this is a first-in-first-out queue where we can
 add new continuations on one side, and take them off to run them from the
 other side:
 
-  import deques
+```nim
+import deques
 
-  var work: Deque[Continuation]
+var work: Deque[Continuation]
+```
 
 Now we need some code to run with this work queue. It will have a pretty simple
 job: it takes one continuation of the queue and trampolines it until it is no
 longer running, and repeat until there is no more work on the queue:
 
-  proc runWork() =
-    while work.len > 0:
-      var c = work.popFirst()
-      while c.running:
-        c = c.fn(c)
+```nim
+proc runWork() =
+  while work.len > 0:
+    var c = work.popFirst()
+    while c.running:
+      c = c.fn(c)
+```
 
 Now we will introduce the last important part for building CPS programs,
 which is a special kind of function with the silly name "cpsMagic". Hold on
@@ -226,9 +250,11 @@ will be used as the next leg in the trampoline.
 
 That sounds complicated, so let's just write our first `cpsMagic` proc:
 
-  proc schedule(c: MyCont): MyCont {.cpsMagic.} =
-    work.addLast c
-    return nil
+```nim
+proc schedule(c: MyCont): MyCont {.cpsMagic.} =
+  work.addLast c
+  return nil
+```
 
 Let's see what happens when we call this:
 
@@ -249,7 +275,9 @@ Remember that when calling a `cpsMagic` function from within CPS, we do not
 need to provide the first argument, nor handle the return type. To call
 the above function, simply do:
 
-  schedule()
+```nim
+schedule()
+```
 
 It is now time to put the above pieces together. Let's take the example
 function we wrote before, and make the required changes:
@@ -262,37 +290,45 @@ function we wrote before, and make the required changes:
 
 This is what it will look like now:
 
-  proc runner2(name: string) {.cps:MyCont.}=
-    var i = 0
-    while i < 4:
-      inc i
-      echo name, " ", i
-      schedule()
-    echo ""
+```nim
+proc runner2(name: string) {.cps:MyCont.}=
+  var i = 0
+  while i < 4:
+    inc i
+    echo name, " ", i
+    schedule()
+  echo ""
+```
 
 And that's it! Now we can instantiate the function into a continuation with
 the `whelp` macro. Let's do this twice to create two instances, and add the
 resulting continuations to the work queue:
 
-  work.addLast whelp runner2("donkey")
-  work.addLast whelp runner2("tiger")
+```nim
+work.addLast whelp runner2("donkey")
+work.addLast whelp runner2("tiger")
+```
 
 Now let's run this beast: 
 
-  runwork()
+```nim
+runwork()
+```
 
 And here is the output of our run:
 
-  donkey 1
-  tiger 1
-  donkey 2
-  tiger 2
-  donkey 3
-  tiger 3
-  donkey 4
-  tiger 4
+```
+donkey 1
+tiger 1
+donkey 2
+tiger 2
+donkey 3
+tiger 3
+donkey 4
+tiger 4
+```
 
-# GROWING YOUR OWN CONTINUATIONS
+## Growing your own continuations
 
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut3.nim
@@ -307,14 +343,13 @@ For this we need to make some changes to the code: first we define a reference
 type holding the work queue, and add a value of this type to our own
 continuation:
 
-```
-  type
+```nim
+type
+  Work = ref object
+    queue: Deque[Continuation]
 
-    Work = ref object
-      queue: Deque[Continuation]
-
-    MyCont = ref object of Continuation
-      work: Work
+  MyCont = ref object of Continuation
+    work: Work
 ```
 
 When we now whelp new continuations, we need to make sure that the `work`
@@ -322,38 +357,46 @@ pointer on the continuation points to a valid work queue. A little convenience
 function can be added for this, which we will use later to add our freshly
 whelped continuations to the work queue:
 
-  proc push(work: Work, c: MyCont) =
-    work.queue.addLast c
-    c.work = work
+```nim
+proc push(work: Work, c: MyCont) =
+  work.queue.addLast c
+  c.work = work
+```
 
 The schedule function is now changed not to add the continuation to
 the global work queue, but to the queue that is stored on the continuation
 instead:
 
-  proc schedule(c: MyCont): MyCont {.cpsMagic.} =
-    c.work.queue.addLast c
-    return nil
+```nim
+proc schedule(c: MyCont): MyCont {.cpsMagic.} =
+  c.work.queue.addLast c
+  return nil
+```
 
 The trampolining of the work queue was done in the main code before, let's move
 this to a proc instead:
 
-  proc run(work: Work) =
-    while work.queue.len > 0:
-      var c = work.queue.popFirst()
-      while c.running:
-        c = c.fn(c)
+```nim
+proc run(work: Work) =
+  while work.queue.len > 0:
+    var c = work.queue.popFirst()
+    while c.running:
+      c = c.fn(c)
+```
 
 And this completes all the pieces of the puzzle: we can now create one
 instance # of a work queue, add the fresh continuations to them and run the
 work queue like this:
 
-  var mywork = Work()
-  mywork.push whelp runner2("donkey")
-  mywork.push whelp runner2("tiger")
-  mywork.run()
+```nim
+var mywork = Work()
+mywork.push whelp runner2("donkey")
+mywork.push whelp runner2("tiger")
+mywork.run()
+```
 
 
-# TODO
+## Todo
 
 TODO: {.cpsVoodo.}
 
