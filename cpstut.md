@@ -317,6 +317,15 @@ continuation:
       work: Work
 ----
 
+When we now whelp new continuations, we need to make sure that the `work`
+pointer on the continuation points to a valid work queue. A little convenience
+function can be added for this, which we will use later to add our freshly
+whelped continuations to the work queue:
+
+  proc push(work: Work, c: MyCont) =
+    work.queue.addLast c
+    c.work = work
+
 The schedule function is now changed not to add the continuation to
 the global work queue, but to the queue that is stored on the continuation
 instead:
@@ -324,15 +333,6 @@ instead:
   proc schedule(c: MyCont): MyCont {.cpsMagic.} =
     c.work.queue.addLast c
     return nil
-
-When we now whelp new continuations, we need to make sure that the `work`
-pointer on the continuation points to a valid work queue. A little convenience
-function can be added for this, which we will use later to add our fresly
-whelped continuations to the work queue:
-
-  proc push(work: Work, c: MyCont) =
-    work.queue.addLast c
-    c.work = work
 
 The trampolining of the work queue was done in the main code before, let's move
 this to a proc instead:
@@ -346,7 +346,7 @@ this to a proc instead:
 And this completes all the pieces of the puzzle: we can now create one
 instance # of a work queue, add the fresh continuations to them and run the
 work queue like this:
-  
+
   var mywork = Work()
   mywork.push whelp runner2("donkey")
   mywork.push whelp runner2("tiger")

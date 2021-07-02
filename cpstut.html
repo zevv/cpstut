@@ -741,18 +741,6 @@ continuation:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>The schedule function is now changed not to add the continuation to
-the global work queue, but to the queue that is stored on the continuation
-instead:</p>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>proc schedule(c: MyCont): MyCont {.cpsMagic.} =
-  c.work.queue.addLast c
-  return nil</pre>
-</div>
-</div>
-<div class="paragraph">
 <p>When we now whelp new continuations, we need to make sure that the <code>work</code>
 pointer on the continuation points to a valid work queue. A little convenience
 function can be added for this, which we will use later to add our fresly
@@ -763,6 +751,18 @@ whelped continuations to the work queue:</p>
 <pre>proc push(work: Work, c: MyCont) =
   work.queue.addLast c
   c.work = work</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The schedule function is now changed not to add the continuation to
+the global work queue, but to the queue that is stored on the continuation
+instead:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc schedule(c: MyCont): MyCont {.cpsMagic.} =
+  c.work.queue.addLast c
+  return nil</pre>
 </div>
 </div>
 <div class="paragraph">
