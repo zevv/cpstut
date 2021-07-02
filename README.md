@@ -87,17 +87,12 @@ continuation object and prepare it so that it will point to the first leg of
 our function. Creating this instance is done with the `whelp` macro, and
 looks like this:
 
-TODO: I still hate whelp. not the word, but the fact that we need it at all.
-I'd rather just do var c = hello(). Yeah yeah I know.
-
 ```nim
 var c: Continuation = whelp hello()
 ```
 
 For technical reasons, the whelp macro returns a derived type, which we need to 
 convert back to the `Continuation` type to be able to work with it.
-
-TODO: Is there really no way around this?
 
 Our continuation is now ready to be run; in fact, it has already started!
 There is a little function to check the state of a continuation, and the one
