@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.12">
+<title>A Nim CPS tutorial</title>
+<style>
+table {
+    border-collapse: separate;
+    border-spacing: 0.2em 0.6em;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+}
+
+#header, #content, #footnotes, #footer {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 45em;
+    position: relative;
+    padding-left: 1em;
+    padding-right: 1em
+}
+
+body {
+    background: #fcfaf7;
+    color: #222727;
+    margin-top: -1.8em;
+    font-family: "Fira Sans", "Open Sans", "Noto Sans", "DejaVu Sans", sans-serif;
+    line-height: 1.6;
+    tab-size: 4;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, #toctitle, .sidebarblock>.content>.title, h4, h5, h6 {
+    font-weight: 400;
+    font-style: normal;
+    color: #cb4b16;
+    margin-top: 2.5em;
+}
+
+h1 {
+  margin-top: 4.0em;
+}
+
+h3 {
+    font-style: italic;
+}
+
+code {
+    font-family: "Fira Mono", "Hack", "Noto Sans Mono", "DejaVu Sans Mono", monospace;
+    font-size: 0.9em;
+    font-weight: 400;
+}
+
+a {
+    color: #268bd2;
+    text-decoration-color: #7daed1;
+}
+
+a:hover, a:focus {
+    color: #cb4b16;
+    text-decoration-color: #cb4b16;
+}
+
+p {
+    font-size: 1.125em;
+    text-rendering: optimizeLegibility
+}
+
+
+*:not(pre)>code {
+    padding: 0.0em 0.35ex;
+    background-color: #eeebe2;
+    border-radius: 6px;
+    -webkit-border-radius: 6px;
+    word-wrap: break-word;
+}
+
+pre.rouge {
+  padding: 1.0em;
+}
+
+pre, pre>code {
+    line-height: 1.30;
+    font-family: "Fira Mono", "Hack", "Noto Sans Mono", "DejaVu Sans Mono", monospace;
+    font-size: 0.95em;
+    border-radius: 12px;
+    -webkit-border-radius: 12px;
+}
+
+td {
+    vertical-align: top;
+}
+
+.admonitionblock td.icon [class^="fa icon-"] {
+    font-size: 2.5em;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, .5);
+}
+
+.admonitionblock>table td.icon {
+    text-align: center;
+    width: 80px;
+}
+
+.admonitionblock td.icon .icon-note:before {
+    content: "\f05a";
+    color: #586e75;
+}
+
+.admonitionblock td.icon .icon-warning:before {
+    content: "\f071";
+    color: #cb4b16;
+}
+
+.literalblock pre, .listingblock pre:not(.highlight), .listingblock pre[class="highlight"], .listingblock pre[class^="highlight "], .listingblock pre.CodeRay, .listingblock pre.prettyprint {
+    background: #eeebe2;
+    padding: 10px;
+}
+
+.listingblock>.title {
+    line-height: 1.0;
+    font-size: 0.95em;
+    color: #cb4b16;
+    font-weight: 400;
+    font-style: italic;
+    margin-bottom: -0.5em;
+}
+
+.conum[data-value] {
+    display: inline-block;
+    color: #fcfaf7;
+    background-color: #586e75;
+    border-radius: 5px;
+    -webkit-border-radius: 5px;
+    text-align: center;
+    font-size: 0.8em;
+    width: 3.0em;
+    line-height: 1.5em;
+    margin-right: 1em;
+    font-style: normal;
+    font-weight: bold;
+}
+
+hr {
+    border: solid #586e75;
+    border-width: 1px 0 0;
+    margin-top: 5em;
+}
+
+em, i {
+    font-style: italic;
+    line-height: inherit;
+}
+
+strong, b {
+    font-weight: bold;
+    line-height: inherit;
+}
+
+.conum[data-value]+b {
+    display: none;
+}
+
+.conum[data-value]:after {
+    content: attr(data-value)
+}
+
+pre .conum[data-value] {
+    position: relative;
+    top: -.125em;
+}
+
+b.conum * {
+    color: inherit!important;
+}
+
+ol li {
+    padding-left: 1em;
+}
+
+@media only screen and (min-width:850px) {
+    body.toc2 {
+        padding-left: 15em;
+        margin-top: -5em;
+    }
+
+    #toc.toc2 {
+        background: #fcfaf7;
+        position: fixed;
+        width: 15em;
+        left: 0;
+        top: 0;
+        border-right: 2px solid #efefed;
+        padding: 0.5em;
+        height: 100%;
+        overflow: auto;
+    }
+}
+
+#toc.toc2 #toctitle {
+    margin-top: 0;
+    margin-bottom: .8rem;
+    font-size: 1.25em;
+}
+#toc.toc2>ul {
+    font-size: 0.875em;
+    padding-left: 0.5em;
+}
+
+#toc.toc2 ul ul {
+    padding-left: 0.5em;
+}
+
+#toc.toc2 a {
+    text-decoration: none;
+}
+
+#toc.toc2 li {
+    margin-left: 0.5em;
+    margin-top: 0em;
+    margin-bottom: 0em;
+}
+
+
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="book toc2 toc-left">
+<div id="header">
+<h1>A Nim CPS tutorial</h1>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_introduction">INTRODUCTION</a></li>
+<li><a href="#_baby_steps_my_first_cps_program">BABY STEPS: MY FIRST CPS PROGRAM</a></li>
+<li><a href="#_the_cps_transform_macro">THE CPS TRANSFORM MACRO</a></li>
+<li><a href="#_a_more_elaboreate_example_cooperative_scheduling">A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING</a></li>
+</ul>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_introduction">INTRODUCTION</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>What you are reading is a little tutorial to get started with Nim CPS. This
+document will introduce the essential parts of the CPS API to get you started
+writing your own CPS programs.</p>
+</div>
+<div class="paragraph">
+<p>The latest greatest CPS can be found at <a href="https://github.com/disruptek/cps" class="bare">https://github.com/disruptek/cps</a></p>
+</div>
+<div class="paragraph">
+<p>If you are not familiar with the concept of CPS I recomment first reading up
+a bit on the background: <a href="https://github.com/zevv/cpsdoc" class="bare">https://github.com/zevv/cpsdoc</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_baby_steps_my_first_cps_program">BABY STEPS: MY FIRST CPS PROGRAM</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>cps is available as a regular nim library that you must import before cps is
+available in your program. The module offers a number of macros and templates,
+for details refer to the module documentation at
+<a href="https://disruptek.github.io/cps/cps.html" class="bare">https://disruptek.github.io/cps/cps.html</a></p>
+</div>
+<div class="paragraph">
+<p>So we start with the import:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>import cps</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At the heart of CPS lies the <code>Continuation</code> type. In our implementation, this
+is just a regular Nim object that is inheritable. This is what the type looks like:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>Continuation = ref object of RootObj
+   fn*: proc (c: Continuation): Continuation {.nimcall.}
+   ...</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The object has a few more fields which are used for the CPS implementation
+internally, but one of the fields is very important for the users of cps,
+which is <code>fn</code>, which is the function pointer that makes CPS continuations
+tick. We&#8217;ll get back to its use later.</p>
+</div>
+<div class="paragraph">
+<p>To start with CPS, you would typically define your own object, inherited from
+the cps Continuation type, like so</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>type
+  Cont1 = ref object of Continuation</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At a later time we will add our own fields to the derived Continuation
+objects, but for now we&#8217;ll start out simple.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_cps_transform_macro">THE CPS TRANSFORM MACRO</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Next to the continuation type, the cps macro is the other imporant part for
+writing CPS programs, this is the macro that will be applied to any Nim
+functions we want to transform to CPS style. This macro does two jobs:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>it will split the Nim function into a number of separate functions that we
+can independely; each of these functions is what we call a "Leg".</p>
+</li>
+<li>
+<p>it will create a new object type that is derived of our <code>Cont1</code>, on which it
+will store all function arguments and local variables. This type is opaque
+to us and is only used by CPS internally.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The cps macro is a bit special, as it is typed: when calling the macro, the
+user needs to specify the type on which the macro should operate, and this
+type needs to be a derivative of the Continuation root object. This is what
+the notation looks like:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc hello() {.cps:Cont1.} =
+  echo "Hello, world!"
+  echo ""</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Congratulations! we have now written our very first CPS program. Nim will now
+know all that is needed to do the transformation on our procedure at compile
+time so it will run our code CPS style.</p>
+</div>
+<div class="paragraph">
+<p>The next thing to do would be to run our CPS transformed function. This
+involves a few steps we&#8217;ll go through:</p>
+</div>
+<div class="paragraph">
+<p>We start with instantiating the continuation: this means CPS will allocate a
+continuation object and prepare it so that it will point to the first leg of
+our function. Creating this instance is done with the <code>whelp</code> macro, and
+looks like this:</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+TODO: I still hate whelp. not the word, but the fact that we need it at all.
+I&#8217;d rather just do var c = hello(). Yeah yeah I know.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>var c: Continuation = whelp hello()</p>
+</div>
+<div class="paragraph">
+<p>For technical reasons, the whelp macro returns a derived type, which we need to
+convert back to the <code>Continuation</code> type to be able to work with it.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+TODO: Is there really no way around this?
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Our continuation is now ready to be run; in fact, it has already started!
+There is a little function to check the state of a continuation, and the one
+above is now in the state called <code>Running</code>. You can inspect the current state
+of a continuation like this:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>doAssert c.state == Running</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or, shorter:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>doAssert c.running()</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, to run the rest of our function (<em>continue</em> it!), we need to do a little
+function call dance, which in the world of CPS is called <code>trampolining</code>: we
+call the <code>fn()</code> proc that is in the object, and pass the object itself to it.
+The result of this function call is again a continuation. Calling the <code>fn()</code>
+function once will run exactly one leg of our function:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>c = c.fn(c)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of the above call will be "Hello, world!" printed to your terminal!</p>
+</div>
+<div class="paragraph">
+<p>Our original function was not very exciting and did not do much; after printing
+the text, it is done and finished - all the work could be done in one single leg.
+This means the continuation is now done and complete:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>doAssert c.state == Finished</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or again, the shorthand</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>doAssert c.finished</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In real life, your CPS functions will have more then one leg. You would
+typically want to call the <code>fn()</code> proc repeatedly until the continunation
+is no longer running. This is a typical CPS idiom, and looks like this:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>while c.running:
+  c = c.fn(c)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Running the continuation legs in a row is called "trampolining", look at
+the diagram below to see why:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>whelp &gt;--.     ,---.     ,---.     ,---.     ,---.     ,--&gt; fihisned
+          \   /     v   /     v   /     v   /     v   /
+         +-----+   +-----+   +-----+   +-----+   +-----+
+         | leg |   | leg |   | leg |   | leg |   | leg |
+         +-----+   +-----+   +-----+   +-----+   +-----+</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_a_more_elaboreate_example_cooperative_scheduling">A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The above function was pretty simply and minimal, as it was transformed to
+only one single leg; it served the purpose of showing how to instantiate and
+run a CPS function.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s go a bit deeper now. The essence of CPS is that our functions can be
+split into legs that can be run at leisure; one typical example of this would
+be cooperative scheduling, where we can run multiple CPS functions
+concurrently.</p>
+</div>
+<div class="paragraph">
+<p>For a simple example, let&#8217;s write a little function with a loop - just a
+normal regular Nim function, which we will change later to run concurrent
+using CPS:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc runner1(name: string) =
+  var i = 0
+  while i &lt; 4:
+    inc i
+    echo name, " ", i
+  echo ""</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>So let&#8217;s call the function to see if it works:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>runner1("donkey")</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The output of this function call looks like this:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>donkey 1
+donkey 2
+donkey 3
+donkey 4</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s see how we can leverage CPS to run multiple instances of this
+function concurrently!</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s start with a place to store the continuations that we want to run. A
+deque is a good fit for this, this is a first-in-first-out queue where we can
+add new continuations on one side, and take them off to run them from the
+other side:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>import deques</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>var work: Deque[Continuation]</p>
+</div>
+<div class="paragraph">
+<p>Now we need some code to run this work queue. It will have a pretty simple
+job: it takes one continuation of the queue and trampoline it until it is no
+longer running, and repeat until there is no more work on the queue:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc runWork() =
+  while work.len &gt; 0:
+    var c = work.popFirst()
+    while c.running:
+      c = c.fn(c)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we will introduce the last important part for building CPS programs,
+which is a special kind of function with the silly name "cpsMagic". Hold on
+to your seat, because this is possibly the most confusing part of CPS:</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s first describe what a cpsMagic function looks like: it</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>is annotated with the {.cpsMagic.} pragma</p>
+</li>
+<li>
+<p>takes a continuation type as its first arguments</p>
+</li>
+<li>
+<p>has the same continuation type as its return value</p>
+</li>
+<li>
+<p>can only be called from within a CPS function</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>When calling the function, you do not need to provide the first argument, as
+this will be injected by the CPS transformation at the call site. Also you do
+not need to consume its return value, as that is handled by CPS internally.</p>
+</div>
+<div class="paragraph">
+<p>Now this is where the magic comes in: cpsMagic functions can be used to alter
+the program flow of a CPS function: it has access to the current continuation
+that is passed as it&#8217;s first argument, and it can return a continuation which
+will be used as the next leg in the trampoline.</p>
+</div>
+<div class="paragraph">
+<p>That sounds complicated, let&#8217;s just write our first .cpsMagic. proc:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
+  work.addLast c
+  return nil</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see what happens when we call this:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The current continuation of the cps function will be passed as the first
+argument 'c'</p>
+</li>
+<li>
+<p>The continuation 'c' is added to <code>work</code>, the dequeue of continuations</p>
+</li>
+<li>
+<p>It returns <code>nil</code> - which means "no continuation". This will cause the
+trampoline that is running the continuation to terminate.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Summarizing the above, the <code>schedule()</code> function will move the current
+continuation to the work queue, and stop the trampoline. The trampoline
+now has lost track of the continuation, as it is stored on the work queue
+instead so we can pick it up and suspend it later.</p>
+</div>
+<div class="paragraph">
+<p>Remember that when calling a .cpsMagic. function from within cps, we do not
+need to provide the first argument, nor handle the return type. To call
+the above function, simply do</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>schedule()</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It is now time to put the above pieces together. Let&#8217;s take the example
+function we wrote before, and make the required changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Add the <code>{.cps:Cont1.}</code> pragma to make it into a CPS function</p>
+</li>
+<li>
+<p>Call <code>schedule()</code> in the loop to suspend execution of the code by
+the trampoline. In the context of coroutines or iterators, this operation
+is usally called "yield"</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>This is what it will look like now:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc runner2(name: string) {.cps:Cont1.}=
+  var i = 0
+  while i &lt; 4:
+    inc i
+    echo name, " ", i
+    schedule()
+  echo ""</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And that&#8217;s it! Now we can instantiate the function into a continuation with
+the <code>whelp</code> macro. Let&#8217;s do this twice to create two instances, and add the
+resulting continuations to the work queue:</p>
+</div>
+<div class="paragraph">
+<p>work.addLast whelp runner2("donkey")
+work.addLast whelp runner2("tiger")</p>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s run this beast:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>runwork()</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And here is the output of our run:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>donkey 1
+tiger 1
+donkey 2
+tiger 2
+donkey 3
+tiger 3
+donkey 4
+tiger 4</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>TODO: {.cpsVoodo.}
+TODO: custom data on the continuation type</p>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
