@@ -2,7 +2,7 @@ import cps
 import deques
 
 type
-  Cont1 = ref object of Continuation
+  MyCont = ref object of Continuation
   
 var work: Deque[Continuation]
 
@@ -12,11 +12,11 @@ proc runWork() =
     while c.running:
       c = c.fn(c)
 
-proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
+proc schedule(c: MyCont): MyCont {.cpsMagic.} =
   work.addLast c
   return nil
 
-proc runner2(name: string) {.cps:Cont1.}=
+proc runner2(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i

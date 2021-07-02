@@ -2,9 +2,9 @@ import cps
 import deques
 
 type
-  Cont1 = ref object of Continuation
+  MyCont = ref object of Continuation
 
-proc hello() {.cps:Cont1.} =
+proc hello() {.cps:MyCont.} =
   echo "Hello, world!"
 
 var c: Continuation = whelp hello()

@@ -243,6 +243,8 @@ ol li {
 <li><a href="#_baby_steps_my_first_cps_program">BABY STEPS: MY FIRST CPS PROGRAM</a></li>
 <li><a href="#_the_cps_transform_macro">THE CPS TRANSFORM MACRO</a></li>
 <li><a href="#_a_more_elaboreate_example_cooperative_scheduling">A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING</a></li>
+<li><a href="#_growing_your_own_continuations">GROWING YOUR OWN CONTINUATIONS</a></li>
+<li><a href="#_todo">TODO</a></li>
 </ul>
 </div>
 </div>
@@ -267,6 +269,10 @@ a bit on the background: <a href="https://github.com/zevv/cpsdoc" class="bare">h
 <div class="sect1">
 <h2 id="_baby_steps_my_first_cps_program">BABY STEPS: MY FIRST CPS PROGRAM</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>The complete code for this chapter can be found at
+<a href="https://github.com/zevv/cpstut/blob/master/cpstut1.nim" class="bare">https://github.com/zevv/cpstut/blob/master/cpstut1.nim</a></p>
+</div>
 <div class="paragraph">
 <p>cps is available as a regular nim library that you must import before cps is
 available in your program. The module offers a number of macros and templates,
@@ -305,7 +311,7 @@ the cps Continuation type, like so</p>
 <div class="literalblock">
 <div class="content">
 <pre>type
-  Cont1 = ref object of Continuation</pre>
+  MyCont = ref object of Continuation</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -329,7 +335,7 @@ functions we want to transform to CPS style. This macro does two jobs:</p>
 can independely; each of these functions is what we call a "Leg".</p>
 </li>
 <li>
-<p>it will create a new object type that is derived of our <code>Cont1</code>, on which it
+<p>it will create a new object type that is derived of our <code>MyCont</code>, on which it
 will store all function arguments and local variables. This type is opaque
 to us and is only used by CPS internally.</p>
 </li>
@@ -343,9 +349,8 @@ the notation looks like:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>proc hello() {.cps:Cont1.} =
-  echo "Hello, world!"
-  echo ""</pre>
+<pre>proc hello() {.cps:MyCont.} =
+  echo "Hello, world!"</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -479,6 +484,10 @@ the diagram below to see why:</p>
 <h2 id="_a_more_elaboreate_example_cooperative_scheduling">A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING</h2>
 <div class="sectionbody">
 <div class="paragraph">
+<p>The complete code for this chapter can be found at
+<a href="https://github.com/zevv/cpstut/blob/master/cpstut2.nim" class="bare">https://github.com/zevv/cpstut/blob/master/cpstut2.nim</a></p>
+</div>
+<div class="paragraph">
 <p>The above function was pretty simply and minimal, as it was transformed to
 only one single leg; it served the purpose of showing how to instantiate and
 run a CPS function.</p>
@@ -500,8 +509,7 @@ using CPS:</p>
   var i = 0
   while i &lt; 4:
     inc i
-    echo name, " ", i
-  echo ""</pre>
+    echo name, " ", i</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -538,8 +546,10 @@ other side:</p>
 <pre>import deques</pre>
 </div>
 </div>
-<div class="paragraph">
-<p>var work: Deque[Continuation]</p>
+<div class="literalblock">
+<div class="content">
+<pre>var work: Deque[Continuation]</pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Now we need some code to run this work queue. It will have a pretty simple
@@ -595,7 +605,7 @@ will be used as the next leg in the trampoline.</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
+<pre>proc schedule(c: MyCont): MyCont {.cpsMagic.} =
   work.addLast c
   return nil</pre>
 </div>
@@ -641,7 +651,7 @@ function we wrote before, and make the required changes:</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Add the <code>{.cps:Cont1.}</code> pragma to make it into a CPS function</p>
+<p>Add the <code>{.cps:MyCont.}</code> pragma to make it into a CPS function</p>
 </li>
 <li>
 <p>Call <code>schedule()</code> in the loop to suspend execution of the code by
@@ -655,7 +665,7 @@ is usally called "yield"</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>proc runner2(name: string) {.cps:Cont1.}=
+<pre>proc runner2(name: string) {.cps:MyCont.}=
   var i = 0
   while i &lt; 4:
     inc i
@@ -698,9 +708,96 @@ donkey 4
 tiger 4</pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_growing_your_own_continuations">GROWING YOUR OWN CONTINUATIONS</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>TODO: {.cpsVoodo.}
-TODO: custom data on the continuation type</p>
+<p>The complete code for this chapter can be found at
+<a href="https://github.com/zevv/cpstut/blob/master/cpstut3.nim" class="bare">https://github.com/zevv/cpstut/blob/master/cpstut3.nim</a></p>
+</div>
+<div class="paragraph">
+<p>The example from the chapter above works just fine, but has one ugly drawback:
+the work queue is a global variable that is accessed from the cpsMagic proc. A
+nice way to solve this is to make the work queue a reference object which is
+added to the continuation type itself: this way, every CPS function can access
+the work queue from the cpsMagic functions, without having it to pass around.</p>
+</div>
+<div class="paragraph">
+<p>For this we need to make some changes to the code: first we define a reference
+type holding the work queue, and add a value of this type to our own
+continuation:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  type
+
+    Work = ref object
+      queue: Deque[Continuation]
+
+    MyCont = ref object of Continuation
+      work: Work</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The schedule function is now changed not to add the continuation to
+the global work queue, but to the queue that is stored on the continuation
+instead:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc schedule(c: MyCont): MyCont {.cpsMagic.} =
+  c.work.queue.addLast c
+  return nil</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When we now whelp new continuations, we need to make sure that the <code>work</code>
+pointer on the continuation points to a valid work queue. A little convenience
+function can be added for this, which we will use later to add our fresly
+whelped continuations to the work queue:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc push(work: Work, c: MyCont) =
+  work.queue.addLast c
+  c.work = work</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The trampolining of the work queue was done in the main code before, let&#8217;s move
+this to a proc instead:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>proc run(work: Work) =
+  while work.queue.len &gt; 0:
+    var c = work.queue.popFirst()
+    while c.running:
+      c = c.fn(c)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And this completes all the pieces of the puzzle: we can now create one
+instance # of a work queue, add the fresh continuations to them and run the
+work queue like this:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>var mywork = Work()
+mywork.push whelp runner2("donkey")
+mywork.push whelp runner2("tiger")
+mywork.run()</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_todo">TODO</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>TODO: {.cpsVoodo.}</p>
 </div>
 </div>
 </div>

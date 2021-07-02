@@ -21,7 +21,8 @@ a bit on the background: https://github.com/zevv/cpsdoc
 
 == BABY STEPS: MY FIRST CPS PROGRAM
 
-The complete code for this chapter can be found at https://github.com/zevv/cpstut/cpstut1.nim
+The complete code for this chapter can be found at 
+https://github.com/zevv/cpstut/blob/master/cpstut1.nim
 
 cps is available as a regular nim library that you must import before cps is
 available in your program. The module offers a number of macros and templates,
@@ -48,7 +49,7 @@ To start with CPS, you would typically define your own object, inherited from
 the cps Continuation type, like so
 
   type
-    Cont1 = ref object of Continuation
+    MyCont = ref object of Continuation
 
 At a later time we will add our own fields to the derived Continuation
 objects, but for now we'll start out simple.
@@ -63,7 +64,7 @@ functions we want to transform to CPS style. This macro does two jobs:
 - it will split the Nim function into a number of separate functions that we
   can independely; each of these functions is what we call a "Leg".
 
-- it will create a new object type that is derived of our `Cont1`, on which it
+- it will create a new object type that is derived of our `MyCont`, on which it
   will store all function arguments and local variables. This type is opaque
   to us and is only used by CPS internally.
 
@@ -72,7 +73,7 @@ user needs to specify the type on which the macro should operate, and this
 type needs to be a derivative of the Continuation root object. This is what
 the notation looks like:
 
-  proc hello() {.cps:Cont1.} =
+  proc hello() {.cps:MyCont.} =
     echo "Hello, world!"
 
 Congratulations! we have now written our very first CPS program. Nim will now
@@ -148,7 +149,8 @@ the diagram below to see why:
 
 == A MORE ELABOREATE EXAMPLE: COOPERATIVE SCHEDULING
 
-The complete code for this chapter can be found at https://github.com/zevv/cpstut/cpstut2.nim
+The complete code for this chapter can be found at
+https://github.com/zevv/cpstut/blob/master/cpstut2.nim
 
 The above function was pretty simply and minimal, as it was transformed to
 only one single leg; it served the purpose of showing how to instantiate and
@@ -224,7 +226,7 @@ will be used as the next leg in the trampoline.
 
 That sounds complicated, let's just write our first .cpsMagic. proc:
 
-  proc schedule(c: Cont1): Cont1 {.cpsMagic.} =
+  proc schedule(c: MyCont): MyCont {.cpsMagic.} =
     work.addLast c
     return nil
 
@@ -252,7 +254,7 @@ the above function, simply do
 It is now time to put the above pieces together. Let's take the example
 function we wrote before, and make the required changes:
 
-- Add the `{.cps:Cont1.}` pragma to make it into a CPS function
+- Add the `{.cps:MyCont.}` pragma to make it into a CPS function
 
 - Call `schedule()` in the loop to suspend execution of the code by
   the trampoline. In the context of coroutines or iterators, this operation
@@ -260,7 +262,7 @@ function we wrote before, and make the required changes:
 
 This is what it will look like now:
 
-  proc runner2(name: string) {.cps:Cont1.}=
+  proc runner2(name: string) {.cps:MyCont.}=
     var i = 0
     while i < 4:
       inc i
@@ -290,6 +292,69 @@ And here is the output of our run:
   donkey 4
   tiger 4
 
+== GROWING YOUR OWN CONTINUATIONS
+
+The complete code for this chapter can be found at
+https://github.com/zevv/cpstut/blob/master/cpstut3.nim
+
+The example from the chapter above works just fine, but has one ugly drawback:
+the work queue is a global variable that is accessed from the cpsMagic proc. A
+nice way to solve this is to make the work queue a reference object which is
+added to the continuation type itself: this way, every CPS function can access
+the work queue from the cpsMagic functions, without having it to pass around.
+
+For this we need to make some changes to the code: first we define a reference
+type holding the work queue, and add a value of this type to our own
+continuation:
+
+----
+  type
+
+    Work = ref object
+      queue: Deque[Continuation]
+
+    MyCont = ref object of Continuation
+      work: Work
+----
+
+The schedule function is now changed not to add the continuation to
+the global work queue, but to the queue that is stored on the continuation
+instead:
+
+  proc schedule(c: MyCont): MyCont {.cpsMagic.} =
+    c.work.queue.addLast c
+    return nil
+
+When we now whelp new continuations, we need to make sure that the `work`
+pointer on the continuation points to a valid work queue. A little convenience
+function can be added for this, which we will use later to add our fresly
+whelped continuations to the work queue:
+
+  proc push(work: Work, c: MyCont) =
+    work.queue.addLast c
+    c.work = work
+
+The trampolining of the work queue was done in the main code before, let's move
+this to a proc instead:
+
+  proc run(work: Work) =
+    while work.queue.len > 0:
+      var c = work.queue.popFirst()
+      while c.running:
+        c = c.fn(c)
+
+And this completes all the pieces of the puzzle: we can now create one
+instance # of a work queue, add the fresh continuations to them and run the
+work queue like this:
+  
+  var mywork = Work()
+  mywork.push whelp runner2("donkey")
+  mywork.push whelp runner2("tiger")
+  mywork.run()
+
+
+== TODO
+
 TODO: {.cpsVoodo.}
-TODO: custom data on the continuation type
+
 
