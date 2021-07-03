@@ -1,3 +1,6 @@
+
+# A more elaborate example: cooperative scheduling
+
 import cps
 import deques
 
@@ -16,7 +19,7 @@ proc schedule(c: MyCont): MyCont {.cpsMagic.} =
   work.addLast c
   return nil
 
-proc runner2(name: string) {.cps:MyCont.}=
+proc work(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -24,7 +27,7 @@ proc runner2(name: string) {.cps:MyCont.}=
     schedule()
   echo ""
 
-work.addLast whelp runner2("donkey")
-work.addLast whelp runner2("tiger")
+work.addLast whelp work("donkey")
+work.addLast whelp work("tiger")
 
 runwork()

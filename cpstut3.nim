@@ -1,3 +1,6 @@
+
+# Growing your own continuations
+
 import cps
 import deques
 
@@ -13,7 +16,17 @@ proc schedule(c: MyCont): MyCont {.cpsMagic.} =
   c.work.queue.addLast c
   return nil
 
-proc runner2(name: string) {.cps:MyCont.}=
+proc push(work: Work, c: MyCont) =
+  work.queue.addLast c
+  c.work = work
+
+proc work(work: Work) =
+  while work.queue.len > 0:
+    var c = work.queue.popFirst()
+    while c.running:
+      c = c.fn(c)
+
+proc runner(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -21,17 +34,7 @@ proc runner2(name: string) {.cps:MyCont.}=
     schedule()
   echo ""
 
-proc push(work: Work, c: MyCont) =
-  work.queue.addLast c
-  c.work = work
-
-proc run(work: Work) =
-  while work.queue.len > 0:
-    var c = work.queue.popFirst()
-    while c.running:
-      c = c.fn(c)
-
 var mywork = Work()
-mywork.push whelp runner2("donkey")
-mywork.push whelp runner2("tiger")
-mywork.run()
+mywork.push whelp runner("donkey")
+mywork.push whelp runner("tiger")
+mywork.work()

@@ -175,7 +175,7 @@ normal regular Nim function, which we will change later to run concurrent
 using CPS:
 
 ```nim
-proc runner1(name: string) =
+proc runner(name: string) =
   var i = 0
   while i < 4:
     inc i
@@ -185,7 +185,7 @@ proc runner1(name: string) =
 So let's call the function to see if it works:
 
 ```nim
-runner1("donkey")
+runner("donkey")
 ```
 
 The output of this function call looks like this:
@@ -280,13 +280,12 @@ function we wrote before, and make the required changes:
 - Add the `{.cps:MyCont.}` pragma to make it into a CPS function
 
 - Call `schedule()` in the loop to suspend execution of the code by
-  the trampoline. In the context of coroutines or iterators, this operation
-  is usually called "yield"
+  the trampoline.
 
 This is what it will look like now:
 
 ```nim
-proc runner2(name: string) {.cps:MyCont.}=
+proc runner(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -300,8 +299,8 @@ the `whelp` macro. Let's do this twice to create two instances, and add the
 resulting continuations to the work queue:
 
 ```nim
-work.addLast whelp runner2("donkey")
-work.addLast whelp runner2("tiger")
+work.addLast whelp runner("donkey")
+work.addLast whelp runner("tiger")
 ```
 
 Now let's run this beast: 
@@ -322,6 +321,12 @@ tiger 3
 donkey 4
 tiger 4
 ```
+
+What we have implemented here is very close to a concept knon as "coroutines":
+this allows for functions that can suspend their execution (often called
+`yield`, where we used `schedule`) to be resumed later. In contrast with
+normal threads, coroutines are light as a feather: they typically cost only a
+handful of bytes per coroutine, and do not require OS context switching.
 
 ## Growing your own continuations
 
@@ -372,7 +377,7 @@ The trampolining of the work queue was done in the main code before, let's move
 this to a proc instead:
 
 ```nim
-proc run(work: Work) =
+proc work(work: Work) =
   while work.queue.len > 0:
     var c = work.queue.popFirst()
     while c.running:
@@ -385,14 +390,41 @@ work queue like this:
 
 ```nim
 var mywork = Work()
-mywork.push whelp runner2("donkey")
-mywork.push whelp runner2("tiger")
-mywork.run()
+mywork.push whelp runner("donkey")
+mywork.push whelp runner("tiger")
+mywork.work()
 ```
 
+## Going deeper: calling CPS from CPS
+
+In the above examples we have seen how to write and run your own CPS functions
+using `whelp` and a trampoline. By moving the continuation objects around you
+are in full control of the control flow, running multiple functions
+concurrently.
+
+Real programs are usually not made of one single function; instead, programs
+are composed of functions calling other functions, calling other functions, all
+the way down. When running regular function code, this is what your control flow
+might look like:
+
+```
+ ----[main..] - - [..main..] - - - - - - - - - - [..main]---> end
+            |     ^        |                     ^
+            v     |        v                     |
+            [func1]        [func2..] - - [..func2]
+                                   |     ^
+                                   v     |
+                                   [func3]
+```
+
+Conveniently, CPS is designed to mimic this normal functional flow when you
+call a cps function from another cps function. Let's extend the previous example
+by changing the `work()` function like this:
+
+TODO: finish this
 
 ## Todo
 
-TODO: {.cpsVoodo.}
+TODO: `{.cpsVoodo.}`
 
 
