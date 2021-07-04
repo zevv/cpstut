@@ -1,4 +1,12 @@
 
+* [Baby steps: my first cps program](#baby-steps-my-first-cps-program)
+* [The CPS transform macro](#the-cps-transform-macro)
+* [A more elaborate example: cooperative scheduling](#a-more-elaborate-example-cooperative-scheduling)
+* [Growing your own continuations](#growing-your-own-continuations)
+* [Going deeper: calling CPS from CPS](#going-deeper-calling-cps-from-cps)
+* [Todo](#todo)
+
+
 # Introduction
 
 What you are reading is a little tutorial to get started with Nim CPS. This
