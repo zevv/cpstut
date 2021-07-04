@@ -429,7 +429,7 @@ the `runner` proc, and call schedule from there:
 
 ```nim
 proc sayHi(name: string, i: int) {.cps:MyCont.} =
-  echo "Hi, ", name, " ", i
+  echo "Hi ", name, " ", i
   schedule()
 
 proc runner(name: string) {.cps:MyCont.}=
@@ -440,23 +440,12 @@ proc runner(name: string) {.cps:MyCont.}=
   echo ""
 ```
 
-This is what the call flow will now look like:
+TODO Properly explain the pass hook
 
 ```
-----[runner..]          
-             |          
-             v          
-             [saHi..]--X
-```
-
-When the continuation is later picked up by the work queue and resumed,
-the child function will finish, and control is passed back to the parent:
-
-```
-            [..runner]---> end
-            ^
-            |
->---[..sayHi]
+proc pass(cFrom, cTo: MyCont): MyCont =
+  cTo.work = cFrom.work
+  return cTo
 ```
 
 
