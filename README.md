@@ -397,6 +397,9 @@ mywork.work()
 
 ## Going deeper: calling CPS from CPS
 
+The complete code for this chapter can be found at 
+https://github.com/zevv/cpstut/blob/master/cpstut4.nim
+
 In the above examples we have seen how to write and run your own CPS functions
 using `whelp` and a trampoline. By moving the continuation objects around you
 are in full control of the control flow, running multiple functions
@@ -440,7 +443,7 @@ proc runner(name: string) {.cps:MyCont.}=
   echo ""
 ```
 
-TODO Properly explain the pass hook
+TODO Better explain the pass hook
 
 ```nim
 proc pass(cFrom, cTo: MyCont): MyCont =
