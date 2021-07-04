@@ -442,7 +442,7 @@ proc runner(name: string) {.cps:MyCont.}=
 
 TODO Properly explain the pass hook
 
-```
+```nim
 proc pass(cFrom, cTo: MyCont): MyCont =
   cTo.work = cFrom.work
   return cTo
