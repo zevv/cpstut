@@ -1,11 +1,4 @@
 
-* [Baby steps: my first cps program](#baby-steps-my-first-cps-program)
-* [The CPS transform macro](#the-cps-transform-macro)
-* [A more elaborate example: cooperative scheduling](#a-more-elaborate-example-cooperative-scheduling)
-* [Growing your own continuations](#growing-your-own-continuations)
-* [Going deeper: calling CPS from CPS](#going-deeper-calling-cps-from-cps)
-* [Todo](#todo)
-
 
 # Introduction
 
@@ -17,6 +10,14 @@ The latest greatest CPS can be found at https://github.com/disruptek/cps
 
 If you are not familiar with the concept of CPS I recomment first reading up
 a bit on the background: https://github.com/zevv/cpsdoc 
+
+## Table of contents
+
+* [Baby steps: my first cps program](#baby-steps-my-first-cps-program)
+* [The CPS transform macro](#the-cps-transform-macro)
+* [A more elaborate example: cooperative scheduling](#a-more-elaborate-example-cooperative-scheduling)
+* [Growing your own continuations](#growing-your-own-continuations)
+* [Going deeper: calling CPS from CPS](#going-deeper-calling-cps-from-cps)
 
 ## Baby steps: my first cps program
 
