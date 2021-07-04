@@ -19,7 +19,7 @@ proc schedule(c: MyCont): MyCont {.cpsMagic.} =
   work.addLast c
   return nil
 
-proc work(name: string) {.cps:MyCont.}=
+proc animal(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -27,7 +27,7 @@ proc work(name: string) {.cps:MyCont.}=
     schedule()
   echo ""
 
-work.addLast whelp work("donkey")
-work.addLast whelp work("tiger")
+work.addLast whelp animal("donkey")
+work.addLast whelp animal("tiger")
 
-runwork()
+runWork()

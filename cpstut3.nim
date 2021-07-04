@@ -20,13 +20,13 @@ proc push(work: Work, c: MyCont) =
   work.queue.addLast c
   c.work = work
 
-proc work(work: Work) =
+proc run(work: Work) =
   while work.queue.len > 0:
     var c = work.queue.popFirst()
     while c.running:
       c = c.fn(c)
 
-proc runner(name: string) {.cps:MyCont.}=
+proc animal(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -35,6 +35,6 @@ proc runner(name: string) {.cps:MyCont.}=
   echo ""
 
 var mywork = Work()
-mywork.push whelp runner("donkey")
-mywork.push whelp runner("tiger")
-mywork.work()
+mywork.push whelp animal("donkey")
+mywork.push whelp animal("tiger")
+mywork.run()

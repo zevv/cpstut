@@ -9,7 +9,7 @@ writing your own CPS programs.
 The latest greatest CPS can be found at https://github.com/disruptek/cps
 
 If you are not familiar with the concept of CPS I recomment first reading up
-a bit on the background: https://github.com/zevv/cpsdoc 
+a bit on the background: https://github.com/zevv/cpsdoc
 
 ## Table of contents
 
@@ -21,10 +21,10 @@ a bit on the background: https://github.com/zevv/cpsdoc
 
 ## Baby steps: my first cps program
 
-The complete code for this chapter can be found at 
+The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut1.nim
 
-cps is available as a regular nim library that you must import before cps is
+CPS is available as a regular nim library that you must import before CPS is
 available in your program. The module offers a number of macros and templates,
 for details refer to the module documentation at
 https://disruptek.github.io/cps/cps.html
@@ -45,12 +45,12 @@ Continuation = ref object of RootObj
 ```
 
 The object has a few more fields which are used for the CPS implementation
-internally, but one of the fields is very important for the users of cps,
+internally, but one of the fields is very important for the users of CPS,
 which is `fn`, the function pointer that makes CPS continuations
 tick. We'll get back to its use later.
 
 To start with CPS, you would typically define your own object, inherited from
-the cps Continuation type, like so
+the CPS Continuation type, like so
 
 ```nim
 type
@@ -63,9 +63,9 @@ objects, but for now we'll start out simple.
 
 ## The CPS transform macro
 
-Next to the continuation type, the cps macro is the other important part for
+Next to the continuation type, the `.cps.` macro is the other important part for
 writing CPS programs, this is the macro that will be applied to any Nim
-functions we want to transform to CPS style. This macro does two jobs: 
+functions we want to transform to CPS style. This macro does two jobs:
 
 - it will split the Nim function into a number of separate functions that we
   can independently; each of these functions is what we call a "Leg".
@@ -74,7 +74,7 @@ functions we want to transform to CPS style. This macro does two jobs:
   will store all function arguments and local variables. This type is opaque
   to us and is only used by CPS internally.
 
-The cps macro is a bit special, as it is typed: when calling the macro, the
+The `.cps.` macro is a bit special, as it is typed: when calling the macro, the
 user needs to specify the type on which the macro should operate, and this
 type needs to be a derivative of the Continuation root object. This is what
 the notation looks like:
@@ -100,7 +100,7 @@ looks like this:
 var c: Continuation = whelp hello()
 ```
 
-For technical reasons, the whelp macro returns a derived type, which we need to 
+For technical reasons, the whelp macro returns a derived type, which we need to
 convert back to the `Continuation` type to be able to work with it.
 
 Our continuation is now ready to be run; in fact, it has already started!
@@ -184,7 +184,7 @@ normal regular Nim function, which we will change later to run concurrent
 using CPS:
 
 ```nim
-proc runner(name: string) =
+proc animal(name: string) =
   var i = 0
   while i < 4:
     inc i
@@ -194,7 +194,7 @@ proc runner(name: string) =
 So let's call the function to see if it works:
 
 ```nim
-runner("donkey")
+animal("donkey")
 ```
 
 The output of this function call looks like this:
@@ -233,7 +233,7 @@ proc runWork() =
 ```
 
 Now we will introduce the last important part for building CPS programs,
-which is a special kind of function with the silly name "cpsMagic". Hold on
+which is a special kind of function with the silly name `cpsMagic`. Hold on
 to your seat, because this is possibly the most confusing part of CPS:
 
 Let's first describe what a `cpsMagic` function looks like: it
@@ -262,7 +262,7 @@ proc schedule(c: MyCont): MyCont {.cpsMagic.} =
 
 Let's see what happens when we call this:
 
-- The current continuation of the cps function will be passed as the first
+- The current continuation of the CPS function will be passed as the first
   argument `c`
 
 - The continuation `c` is added to `work`, the dequeue of continuations
@@ -294,7 +294,7 @@ function we wrote before, and make the required changes:
 This is what it will look like now:
 
 ```nim
-proc runner(name: string) {.cps:MyCont.}=
+proc animal(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -308,11 +308,11 @@ the `whelp` macro. Let's do this twice to create two instances, and add the
 resulting continuations to the work queue:
 
 ```nim
-work.addLast whelp runner("donkey")
-work.addLast whelp runner("tiger")
+work.addLast whelp animal("donkey")
+work.addLast whelp animal("tiger")
 ```
 
-Now let's run this beast: 
+Now let's run this beast:
 
 ```nim
 runwork()
@@ -336,6 +336,18 @@ this allows for functions that can suspend their execution (often called
 `yield`, where we used `schedule`) to be resumed later. In contrast with
 normal threads, coroutines are light as a feather: they typically cost only a
 handful of bytes per coroutine, and do not require OS context switching.
+
+
+```
+
+  : = schedule()
+
+            :       :          :       :          :       :
+ --[donkey..]       [..donkey..]       [..donkey..]       [..donkey..
+            :       :          :       :          :       :
+            [tiger..]          [tiger..]          [tiger..]
+            :       :          :       :          :       :
+```
 
 ## Growing your own continuations
 
@@ -394,19 +406,19 @@ proc work(work: Work) =
 ```
 
 And this completes all the pieces of the puzzle: we can now create one
-instance # of a work queue, add the fresh continuations to them and run the
+instance of a work queue, add the fresh continuations to them and run the
 work queue like this:
 
 ```nim
 var mywork = Work()
-mywork.push whelp runner("donkey")
-mywork.push whelp runner("tiger")
+mywork.push whelp animal("donkey")
+mywork.push whelp animal("tiger")
 mywork.work()
 ```
 
 ## Going deeper: calling CPS from CPS
 
-The complete code for this chapter can be found at 
+The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut4.nim
 
 In the above examples we have seen how to write and run your own CPS functions
@@ -429,22 +441,22 @@ might look like:
                                    [func3]
 ```
 
-Conveniently, CPS offers this functional flow when you call a cps function from
-another cps function: the current continuation (the "parent") will be temporary
+Conveniently, CPS offers this functional flow when you call a CPS function from
+another CPS function: the current continuation (the "parent") will be temporary
 suspended, and its continuation will be replaced by a newly whelped one for the
 new called function (the "child"). When the child finishes during trampolining,
-CPS will automatically restore the continuation for the parent, which will them
+CPS will automatically restore the continuation for the parent, which can then
 be resumed.
 
-Let's extend our earlier example: we will make a cps-to-cps function call from
-the `runner` proc, and call schedule from there:
+Let's extend our earlier example: we will make a CPS-to-CPS function call from
+the `animal` proc, and call schedule from there:
 
 ```nim
 proc sayHi(name: string, i: int) {.cps:MyCont.} =
   echo "Hi ", name, " ", i
   schedule()
 
-proc runner(name: string) {.cps:MyCont.}=
+proc animal(name: string) {.cps:MyCont.}=
   var i = 0
   while i < 4:
     inc i
@@ -452,7 +464,41 @@ proc runner(name: string) {.cps:MyCont.}=
   echo ""
 ```
 
-TODO Better explain the pass hook
+Note that we can just call the `sayHi()` proc as if it were a normal Nim proc:
+there is no need use `whelp` where, CPS will automatically do the right thing
+for you.
+
+However, there is one more thing we need to add to the program to make this
+work:
+
+Remember that when we whelped the initial continuation for the `animal()`
+function, we added this to the work queue with the `push()` function. `push()`
+does not only add the continuation to the work queue, but also sets the `work`
+field of the continuation to point to the work queue itself, so it can later be
+used by `schedule()` to suspend execution.
+
+However, when we call `sayHi()` from `animal()`, CPS will implicitly whelp the
+new continuation for the `sayHi()` function for us, and this continuation will
+not have its `work` field initialized.
+
+Enter CPS "hooks": hooks are procs or templates that get mixed in by CPS which
+you can choose to implement to taylor CPS' behaviour to your needs. We will use
+the `pass()` hook, which gets called when CPS performs a call or return from a
+CPS function, and looks like this:
+
+```
+proc pass(cFrom, cTo: Continuation): Continuation
+```
+
+It gets passed two continuations as arguments: the first is the current
+continuation that is now active, the second is the next continuation that will
+be ran
+
+- on a *call*, `cFrom` will be the parent continuation, and `cTo` the child
+- on a *return*, `cFrom` points to the child, and `cTo` to the parent.
+
+We can uset the `pass()` hook to set the `work` field of the new child continuation
+that gets whelped by CPS, effectively inheriting it from the parent function:
 
 ```nim
 proc pass(cFrom, cTo: MyCont): MyCont =
@@ -460,10 +506,27 @@ proc pass(cFrom, cTo: MyCont): MyCont =
   return cTo
 ```
 
+With the above changes, this is what the control flow will now look like this:
+
+```
+ : = schedule()
+
+                   :                         :                              :
+ --[donkey..]      :                         :         [..donkey..]         :
+            |      :                         :         |          |         :
+            [saHi..] - - - - - - - - - - - - [..sayHi..]          [..sayHi..] - - - - - - - -
+                   :                         :                              :
+                   :                         :                              :
+                   :                         :                              :
+                   :       [..tiger..]       :                              :       [..tiger..
+                   :       |         |       :                              :       |
+ - - - - - - - - - [sayHi..]         [sayHi..] - - - - - - - - - - - - - -  [..sayHi]
+                   :                         :                              :
+```
+
 
 ## Todo
 
-- hooks
 - `{.cpsVoodo.}`
 
 
