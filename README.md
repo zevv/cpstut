@@ -417,14 +417,52 @@ might look like:
                                    [func3]
 ```
 
-Conveniently, CPS is designed to mimic this normal functional flow when you
-call a cps function from another cps function. Let's extend the previous example
-by changing the `work()` function like this:
+Conveniently, CPS offers this functional flow when you call a cps function from
+another cps function: the current continuation (the "parent") will be temporary
+suspended, and its continuation will be replaced by a newly whelped one for the
+new called function (the "child"). When the child finishes during trampolining,
+CPS will automatically restore the continuation for the parent, which will them
+be resumed.
 
-TODO: finish this
+Let's extend our earlier example: we will make a cps-to-cps function call from
+the `runner` proc, and call schedule from there:
+
+```nim
+proc sayHi(name: string, i: int) {.cps:MyCont.} =
+  echo "Hi, ", name, " ", i
+  schedule()
+
+proc runner(name: string) {.cps:MyCont.}=
+  var i = 0
+  while i < 4:
+    inc i
+    sayHi(name, i)
+  echo ""
+```
+
+This is what the call flow will now look like:
+
+```
+----[runner..]          
+             |          
+             v          
+             [saHi..]--X
+```
+
+When the continuation is later picked up by the work queue and resumed,
+the child function will finish, and control is passed back to the parent:
+
+```
+            [..runner]---> end
+            ^
+            |
+>---[..sayHi]
+```
+
 
 ## Todo
 
-TODO: `{.cpsVoodo.}`
+- hooks
+- `{.cpsVoodo.}`
 
 
