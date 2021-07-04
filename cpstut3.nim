@@ -22,9 +22,7 @@ proc push(work: Work, c: MyCont) =
 
 proc run(work: Work) =
   while work.queue.len > 0:
-    var c = work.queue.popFirst()
-    while c.running:
-      c = c.fn(c)
+    discard trampoline work.queue.popFirst()
 
 proc animal(name: string) {.cps:MyCont.}=
   var i = 0

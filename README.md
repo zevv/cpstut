@@ -164,6 +164,8 @@ whelp >--.     ,---.     ,---.     ,---.     ,---.     ,--> finished
          +-----+   +-----+   +-----+   +-----+   +-----+
 ```
 
+Because trampolining is a very common operation, CPS offers a template called
+`trampoline()` that does exactly this.
 
 ## A more elaborate example: cooperative scheduling
 
@@ -222,14 +224,13 @@ var work: Deque[Continuation]
 
 Now we need some code to run with this work queue. It will have a pretty simple
 job: it takes one continuation of the queue and trampolines it until it is no
-longer running, and repeat until there is no more work on the queue:
+longer running, and repeat until there is no more work on the queue. Note that we
+also use the `tramploline()` template now, instead of calling `c.fn()` ourselves:
 
 ```nim
 proc runWork() =
   while work.len > 0:
-    var c = work.popFirst()
-    while c.running:
-      c = c.fn(c)
+    discard trampoline work.popFirst()
 ```
 
 Now we will introduce the last important part for building CPS programs,

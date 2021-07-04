@@ -26,9 +26,7 @@ proc push(work: Work, c: MyCont) =
 
 proc work(work: Work) =
   while work.queue.len > 0:
-    var c = work.queue.popFirst()
-    while c.running:
-      c = c.fn(c)
+    discard trampoline work.queue.popFirst()
 
 proc sayHi(name: string, i: int) {.cps:MyCont.} =
   echo "Hi ", name, " ", i
