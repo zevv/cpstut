@@ -63,14 +63,13 @@ objects, but for now we'll start out simple.
 
 ## The CPS transform macro
 
-Next to the continuation type, the `.cps.` macro is the other important part for
+Next to the continuation type, the `.cps.` macro is the other essential part of
 writing CPS programs, this is the macro that will be applied to any Nim
-functions we want to transform to CPS style. This macro does two jobs:
+function we want to transform to CPS style. This macro does two jobs:
 
-- it will split the Nim function into a number of separate functions that we
+- It splits the Nim function into a number of separate functions that we
   can independently; each of these functions is what we call a "Leg".
-
-- it will create a new object type that is derived from our `MyCont`, on which it
+- It creates a new object type that is derived from our `MyCont`, on which it
   will store all function arguments and local variables. This type is opaque
   to us and is only used by CPS internally.
 
@@ -85,11 +84,11 @@ proc hello() {.cps:MyCont.} =
 ```
 
 Congratulations! We have now written our very first CPS program. Nim will now
-know all that is needed to do the transformation on our procedure at compile
+know all that is needed to do the transformation of our procedure at compile
 time so it will run our code in CPS style.
 
 The next thing to do would be to run our CPS transformed function. This
-involves a few steps we'll go through:
+involves a few steps we'll go through below.
 
 We start with instantiating the continuation: this means CPS will allocate a
 continuation object and prepare it so that it will point to the first leg of
@@ -128,7 +127,7 @@ function once will run exactly one leg of our function:
 c = c.fn(c)
 ```
 
-The result of the above call will be "Hello, world!" printed to your terminal!
+The effect of the call above is printing "Hello, world!" to your terminal!
 
 Our original function was not very exciting and did not do much; after printing
 the text, it is done and finished - all the work could be done in one single leg.
@@ -153,7 +152,7 @@ while c.running:
   c = c.fn(c)
 ```
 
-Running the continuation legs in a row is called "trampolining", look at
+Running the continuation legs sequentially is called "trampolining", look at
 the diagram below to see why:
 
 ```
@@ -172,7 +171,7 @@ Because trampolining is a very common operation, CPS offers a template called
 The complete code for this chapter can be found at
 https://github.com/zevv/cpstut/blob/master/cpstut2.nim
 
-The above function was pretty simply and minimal, as it was transformed to
+The above function was pretty simple and minimal, as it was transformed to
 only one single leg; it served the purpose of showing how to instantiate and
 run a CPS function.
 
@@ -214,7 +213,7 @@ function concurrently!
 Let's start with a place to store the continuations that we want to run. A
 deque is a good fit for this, this is a first-in-first-out queue where we can
 add new continuations on one side, and take them off to run them from the
-other side:
+other:
 
 ```nim
 import deques
@@ -225,7 +224,7 @@ var work: Deque[Continuation]
 Now we need some code to run with this work queue. It will have a pretty simple
 job: it takes one continuation of the queue and trampolines it until it is no
 longer running, and repeat until there is no more work on the queue. Note that we
-also use the `tramploline()` template now, instead of calling `c.fn()` ourselves:
+also use the `trampoline()` template now, instead of calling `c.fn()` ourselves:
 
 ```nim
 proc runWork() =
@@ -237,18 +236,18 @@ Now we will introduce the last important part for building CPS programs,
 which is a special kind of function with the silly name `cpsMagic`. Hold on
 to your seat, because this is possibly the most confusing part of CPS:
 
-Let's first describe what a `cpsMagic` function looks like: it
+Let's first describe what a `cpsMagic` function looks like. It:
 
-- is annotated with the `{.cpsMagic.}` pragma
-- takes a continuation type as its first arguments
-- has the same continuation type as its return value
-- can only be called from within a CPS function
+- is annotated with the `{.cpsMagic.}` pragma;
+- takes a continuation type as its first arguments;
+- has the same continuation type as its return value;
+- can only be called from within a CPS function.
 
 When calling the function, you do not need to provide the first argument, as
 this will be injected by the CPS transformation at the call site. Also you do
 not need to consume its return value, as that is handled by CPS internally.
 
-Now this is where the magic comes in: cpsMagic functions can be used to alter
+Now this is where the magic comes in. `cpsMagic` functions can be used to alter
 the program flow of a CPS function: it has access to the current continuation
 that is passed as its first argument, and it can return a continuation which
 will be used as the next leg in the trampoline.
@@ -264,11 +263,9 @@ proc schedule(c: MyCont): MyCont {.cpsMagic.} =
 Let's see what happens when we call this:
 
 - The current continuation of the CPS function will be passed as the first
-  argument `c`
-
-- The continuation `c` is added to `work`, the dequeue of continuations
-
-- It returns `nil` - which means "no continuation". This will cause the
+  argument `c`.
+- The continuation `c` is added to `work` - the dequeue of continuations.
+- It returns `nil` which means "no continuation". This will cause the
   trampoline that is running the continuation to terminate.
 
 Summarizing the above, the `schedule()` function will move the current
@@ -287,8 +284,7 @@ schedule()
 It is now time to put the above pieces together. Let's take the example
 function we wrote before, and make the required changes:
 
-- Add the `{.cps:MyCont.}` pragma to make it into a CPS function
-
+- Add the `{.cps:MyCont.}` pragma to make it into a CPS function.
 - Call `schedule()` in the loop to suspend execution of the code by
   the trampoline.
 
@@ -316,7 +312,7 @@ work.addLast whelp animal("tiger")
 Now let's run this beast:
 
 ```nim
-runwork()
+runWork()
 ```
 
 And here is the output of our run:
@@ -332,9 +328,9 @@ donkey 4
 tiger 4
 ```
 
-What we have implemented here is very close to a concept knon as "coroutines":
-this allows for functions that can suspend their execution (often called
-`yield`, where we used `schedule`) to be resumed later. In contrast with
+What we have implemented here is very close to a concept known as "coroutines":
+this allows for functions that can suspend their execution (often called `yield`)
+at a point where we called `schedule` to be resumed later. In contrast with
 normal threads, coroutines are light as a feather: they typically cost only a
 handful of bytes per coroutine, and do not require OS context switching.
 
@@ -449,7 +445,7 @@ new called function (the "child"). When the child finishes during trampolining,
 CPS will automatically restore the continuation for the parent, which can then
 be resumed.
 
-Let's extend our earlier example: we will make a CPS-to-CPS function call from
+Let's extend our earlier example. We will make a CPS-to-CPS function call from
 the `animal` proc, and call schedule from there:
 
 ```nim
@@ -466,7 +462,7 @@ proc animal(name: string) {.cps:MyCont.}=
 ```
 
 Note that we can just call the `sayHi()` proc as if it were a normal Nim proc:
-there is no need use `whelp` where, CPS will automatically do the right thing
+there is no need use `whelp` there, CPS will automatically do the right thing
 for you.
 
 However, there is one more thing we need to add to the program to make this
@@ -491,11 +487,11 @@ CPS function, and looks like this:
 proc pass(cFrom, cTo: Continuation): Continuation
 ```
 
-It gets passed two continuations as arguments: the first is the current
+It gets passed two continuations as arguments. The first is the current
 continuation that is now active, the second is the next continuation that will
-be ran
+be ran:
 
-- on a *call*, `cFrom` will be the parent continuation, and `cTo` the child
+- on a *call*, `cFrom` will be the parent continuation, and `cTo` the child;
 - on a *return*, `cFrom` points to the child, and `cTo` to the parent.
 
 We can uset the `pass()` hook to set the `work` field of the new child continuation
