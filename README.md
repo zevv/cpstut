@@ -479,7 +479,7 @@ new continuation for the `sayHi()` function for us, and this continuation will
 not have its `work` field initialized.
 
 Enter CPS "hooks": hooks are procs or templates that get mixed in by CPS which
-you can choose to implement to taylor CPS' behaviour to your needs. We will use
+you can choose to implement to tailor CPS' behaviour to your needs. We will use
 the `pass()` hook, which gets called when CPS performs a call or return from a
 CPS function, and looks like this:
 
@@ -494,7 +494,7 @@ be ran:
 - on a *call*, `cFrom` will be the parent continuation, and `cTo` the child;
 - on a *return*, `cFrom` points to the child, and `cTo` to the parent.
 
-We can uset the `pass()` hook to set the `work` field of the new child continuation
+We can use the `pass()` hook to set the `work` field of the new child continuation
 that gets whelped by CPS, effectively inheriting it from the parent function:
 
 ```nim
